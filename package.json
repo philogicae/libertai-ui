@@ -25,7 +25,8 @@
   },
   "dependencies": {
     "@aleph-sdk/client": "^1.0.6",
-    "@aleph-sdk/ethereum": "^1.0.3",
+    "@aleph-sdk/ethereum": "file:../aleph-sdk-ts/packages/ethereum/aleph-sdk-ethereum-1.0.3.tgz",
+    "@aleph-sdk/evm": "file:../aleph-sdk-ts/packages/evm/aleph-sdk-evm-1.0.4.tgz",
     "@aleph-sdk/message": "^1.0.7",
     "@libertai/libertai-js": "0.0.10-beta",
     "@quasar/extras": "^1.16.12",

@@ -2,8 +2,9 @@ import { AuthenticatedAlephHttpClient } from '@aleph-sdk/client';
 import { ETHAccount, getAccountFromProvider, importAccountFromPrivateKey } from '@aleph-sdk/ethereum';
 import web3 from 'web3';
 import { ItemType } from '@aleph-sdk/message';
-import { signMessage } from '@wagmi/core';
+import { type Config, getClient, signMessage } from '@wagmi/core';
 import { config } from 'src/config/wagmi';
+import type { Chain, Client, Transport } from 'viem';
 import { SignMessageReturnType } from 'viem';
 import {
   KnowledgeBase,
@@ -14,6 +15,7 @@ import {
 import { decrypt, encrypt, generateIv, generateKey } from 'src/utils/encryption';
 import { PrivateKey } from 'eciesjs';
 import { decryptKnowledgeBaseIdentifiers, encryptKnowledgeBaseIdentifiers } from 'src/utils/knowledge/encryption';
+import { providers } from 'ethers';
 
 // Aleph keys and channels settings
 const SECURITY_AGGREGATE_KEY = 'security';
@@ -22,6 +24,29 @@ const LIBERTAI_CHANNEL = 'libertai-chat-ui';
 const LIBERTAI_SETTINGS_KEY = `${LIBERTAI_CHANNEL}-settings`;
 const LIBERTAI_KNOWLEDGE_BASE_IDENTIFIERS_KEY = `${LIBERTAI_CHANNEL}-knowledge-base-identifiers-test-12`;
 const LIBERTAI_KNOWLEDGE_BASE_POST_TYPE = `${LIBERTAI_CHANNEL}-knowledge-base-test-12`;
+
+export function clientToProvider(client: Client<Transport, Chain>) {
+  const { chain, transport } = client;
+  const network = {
+    chainId: chain.id,
+    name: chain.name,
+    ensAddress: chain.contracts?.ensRegistry?.address,
+  };
+  if (transport.type === 'fallback')
+    return new providers.FallbackProvider(
+      (transport.transports as ReturnType<Transport>[]).map(
+        ({ value }) => new providers.JsonRpcProvider(value?.url, network),
+      ),
+    );
+  return new providers.JsonRpcProvider(transport.url, network);
+}
+
+/** Action to convert a viem Public Client to an ethers.js Provider. */
+export function getEthersProvider(config: Config, { chainId }: { chainId?: number } = {}) {
+  const client = getClient(config, { chainId });
+  if (!client) return;
+  return clientToProvider(client);
+}
 
 export class AlephPersistentStorage {
   constructor(
@@ -47,7 +72,9 @@ export class AlephPersistentStorage {
     const encryptionPrivateKey = PrivateKey.fromHex(privateKey);
 
     const subAccount = importAccountFromPrivateKey(privateKey);
-    const account = await getAccountFromProvider(window.ethereum);
+    const provider = getEthersProvider(config);
+
+    const account = await getAccountFromProvider(provider as unknown as any);
     const accountClient = new AuthenticatedAlephHttpClient(account, process.env.ALEPH_API_URL);
     const subAccountClient = new AuthenticatedAlephHttpClient(subAccount, process.env.ALEPH_API_URL);
 
