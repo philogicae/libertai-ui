@@ -1,10 +1,10 @@
 import { AuthenticatedAlephHttpClient } from '@aleph-sdk/client';
-import { ETHAccount, getAccountFromProvider, importAccountFromPrivateKey } from '@aleph-sdk/ethereum';
+import { BaseAccount, getAccountFromProvider, importAccountFromPrivateKey } from '@aleph-sdk/base';
 import web3 from 'web3';
 import { ItemType } from '@aleph-sdk/message';
-import { type Config, getClient, signMessage } from '@wagmi/core';
+import { type Config, getConnectorClient, signMessage } from '@wagmi/core';
 import { config } from 'src/config/wagmi';
-import type { Chain, Client, Transport } from 'viem';
+import type { Account, Chain, Client, Transport } from 'viem';
 import { SignMessageReturnType } from 'viem';
 import {
   KnowledgeBase,
@@ -25,33 +25,28 @@ const LIBERTAI_SETTINGS_KEY = `${LIBERTAI_CHANNEL}-settings`;
 const LIBERTAI_KNOWLEDGE_BASE_IDENTIFIERS_KEY = `${LIBERTAI_CHANNEL}-knowledge-base-identifiers-test-12`;
 const LIBERTAI_KNOWLEDGE_BASE_POST_TYPE = `${LIBERTAI_CHANNEL}-knowledge-base-test-12`;
 
-export function clientToProvider(client: Client<Transport, Chain>) {
-  const { chain, transport } = client;
+export function clientToSigner(client: Client<Transport, Chain, Account>) {
+  const { account, chain, transport } = client;
   const network = {
     chainId: chain.id,
     name: chain.name,
     ensAddress: chain.contracts?.ensRegistry?.address,
   };
-  if (transport.type === 'fallback')
-    return new providers.FallbackProvider(
-      (transport.transports as ReturnType<Transport>[]).map(
-        ({ value }) => new providers.JsonRpcProvider(value?.url, network),
-      ),
-    );
-  return new providers.JsonRpcProvider(transport.url, network);
+  const provider = new providers.Web3Provider(transport, network);
+  const signer = provider.getSigner(account.address);
+  return signer;
 }
 
-/** Action to convert a viem Public Client to an ethers.js Provider. */
-export function getEthersProvider(config: Config, { chainId }: { chainId?: number } = {}) {
-  const client = getClient(config, { chainId });
-  if (!client) return;
-  return clientToProvider(client);
+/** Action to convert a Viem Client to an ethers.js Signer. */
+export async function getEthersSigner(config: Config, { chainId }: { chainId?: number } = {}) {
+  const client = await getConnectorClient(config, { chainId });
+  return clientToSigner(client);
 }
 
 export class AlephPersistentStorage {
   constructor(
     /* eslint-disable-next-line no-unused-vars */
-    private account: ETHAccount,
+    private account: BaseAccount,
     /* eslint-disable-next-line no-unused-vars */
     private subAccountClient: AuthenticatedAlephHttpClient,
     // eslint-disable-next-line no-unused-vars
@@ -72,9 +67,10 @@ export class AlephPersistentStorage {
     const encryptionPrivateKey = PrivateKey.fromHex(privateKey);
 
     const subAccount = importAccountFromPrivateKey(privateKey);
-    const provider = getEthersProvider(config);
+    const signer = await getEthersSigner(config);
+    const web3Provider = signer.provider;
 
-    const account = await getAccountFromProvider(provider as unknown as any);
+    const account = await getAccountFromProvider(web3Provider as unknown as any);
     const accountClient = new AuthenticatedAlephHttpClient(account, process.env.ALEPH_API_URL);
     const subAccountClient = new AuthenticatedAlephHttpClient(subAccount, process.env.ALEPH_API_URL);
 
@@ -84,8 +80,8 @@ export class AlephPersistentStorage {
   }
 
   static async getSecurityPermission(
-    account: ETHAccount,
-    subAccount: ETHAccount,
+    account: BaseAccount,
+    subAccount: BaseAccount,
     accountClient: AuthenticatedAlephHttpClient,
   ) {
     try {

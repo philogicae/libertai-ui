@@ -24,10 +24,12 @@
     "build": "quasar build"
   },
   "dependencies": {
+    "@aleph-sdk/base": "file:../aleph-sdk-ts/packages/base",
     "@aleph-sdk/client": "^1.0.6",
-    "@aleph-sdk/ethereum": "file:../aleph-sdk-ts/packages/ethereum/aleph-sdk-ethereum-1.0.3.tgz",
-    "@aleph-sdk/evm": "file:../aleph-sdk-ts/packages/evm/aleph-sdk-evm-1.0.4.tgz",
-    "@aleph-sdk/message": "^1.0.7",
+    "@aleph-sdk/core": "file:../aleph-sdk-ts/packages/core",
+    "@aleph-sdk/ethereum": "file:../aleph-sdk-ts/packages/ethereum",
+    "@aleph-sdk/evm": "file:../aleph-sdk-ts/packages/evm",
+    "@aleph-sdk/message": "file:../aleph-sdk-ts/packages/message",
     "@libertai/libertai-js": "0.0.10-beta",
     "@quasar/extras": "^1.16.12",
     "@tanstack/vue-query": "^5.51.21",
@@ -37,6 +39,7 @@
     "dompurify": "^3.1.6",
     "dotenv": "^16.4.5",
     "eciesjs": "^0.4.7",
+    "ethers": "^5.7.2",
     "filesize": "^10.1.4",
     "highlight.js": "^11.10.0",
     "langchain": "^0.2.13",
