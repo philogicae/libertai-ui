@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@aleph-sdk/base": "file:../aleph-sdk-ts/packages/base",
-    "@aleph-sdk/client": "^1.0.6",
+    "@aleph-sdk/client": "file:../aleph-sdk-ts/packages/client",
     "@aleph-sdk/core": "file:../aleph-sdk-ts/packages/core",
     "@aleph-sdk/ethereum": "file:../aleph-sdk-ts/packages/ethereum",
     "@aleph-sdk/evm": "file:../aleph-sdk-ts/packages/evm",

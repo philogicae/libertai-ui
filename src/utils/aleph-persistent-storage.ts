@@ -64,18 +64,16 @@ export class AlephPersistentStorage {
       console.error('Private key generation failed');
       return undefined;
     }
-    const encryptionPrivateKey = PrivateKey.fromHex(privateKey);
 
-    const subAccount = importAccountFromPrivateKey(privateKey);
-    const signer = await getEthersSigner(config);
-    const web3Provider = signer.provider;
-
-    const account = await getAccountFromProvider(web3Provider as unknown as any);
+    const provider = new providers.Web3Provider(window.ethereum);
+    const account = await getAccountFromProvider(provider);
     const accountClient = new AuthenticatedAlephHttpClient(account, process.env.ALEPH_API_URL);
+
+    const encryptionPrivateKey = PrivateKey.fromHex(privateKey);
+    const subAccount = importAccountFromPrivateKey(privateKey);
     const subAccountClient = new AuthenticatedAlephHttpClient(subAccount, process.env.ALEPH_API_URL);
 
     await AlephPersistentStorage.getSecurityPermission(account, subAccount, accountClient);
-
     return new AlephPersistentStorage(account, subAccountClient, encryptionPrivateKey);
   }
 
